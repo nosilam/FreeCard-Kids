@@ -1,3 +1,4 @@
+"""
 FreeCard Kids
 Configuration
 
@@ -5,39 +6,38 @@ MIT License
 https://github.com/nosilam/FreeCard-Kids
 """
 
-# ---------- Card ----------
-
+# -----------------------------
+# Card dimensions (mm)
+# -----------------------------
 CARD_WIDTH = 85.0
 CARD_HEIGHT = 55.0
-
-BASE_HEIGHT = 1.8
-TOP_HEIGHT = 0.6
-
+BASE_THICKNESS = 1.8
+RELIEF_HEIGHT = 0.6
 CORNER_RADIUS = 5.0
 
-FRAME_WIDTH = 1.0
+# -----------------------------
+# Frame
+# -----------------------------
+FRAME_WIDTH = 1.2
 
-# ---------- QR ----------
-
+# -----------------------------
+# QR Code
+# -----------------------------
 QR_SIZE = 45.0
 QR_MARGIN = 2.0
 
-# ---------- Text ----------
-
-NAME_SIZE = 5.5
-
-PHONE_SIZE = 3.0
-
-INFO_SIZE = 2.2
-
-FONT = "Noto Sans"
-
-# ---------- Layout ----------
+# -----------------------------
+# Text
+# -----------------------------
+NAME_HEIGHT = 6.0
+PHONE_HEIGHT = 3.2
+INFO_HEIGHT = 2.2
 
 LEFT_MARGIN = 5.0
 TOP_MARGIN = 5.0
 
-# ---------- Export ----------
-
-EXPORT_STL = True
-EXPORT_3MF = True
+# -----------------------------
+# Default text
+# -----------------------------
+INFO_DE = "Scanne mich für alle Kontaktdaten"
+INFO_EN = "Scan me for all contact details"
