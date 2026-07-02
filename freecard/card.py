@@ -1,18 +1,25 @@
-CARD_WIDTH = 85.0
-CARD_HEIGHT = 55.0
+import FreeCAD as App
+import Part
 
-CARD_THICKNESS = 1.8
+from .config import *
 
-FRAME_HEIGHT = 0.6
 
-TEXT_HEIGHT = 0.6
+class Card:
 
-CORNER_RADIUS = 5.0
+    def __init__(self):
 
-QR_SIZE = 45.0
+        self.doc = App.ActiveDocument
 
-FRAME_WIDTH = 1.0
+        if self.doc is None:
+            self.doc = App.newDocument("FreeCard")
 
-FONT = "Noto Sans"
+    def create_base(self):
 
-LANGUAGE = "de"
+        plate = Part.makeBox(
+            CARD_WIDTH,
+            CARD_HEIGHT,
+            BASE_HEIGHT
+        )
+
+        return plate
+      
