@@ -1,0 +1,80 @@
+# -*- coding: utf-8 -*-
+"""
+FreeCard Kids
+Version 0.1
+
+Erzeugt eine Visitenkarten-Basis.
+FreeCAD 1.1.1
+"""
+
+import FreeCAD as App
+import Part
+
+# ------------------------------------------------------------
+# Konfiguration
+# ------------------------------------------------------------
+
+CARD_WIDTH = 85.0
+CARD_HEIGHT = 55.0
+
+BASE_THICKNESS = 1.8
+
+# ------------------------------------------------------------
+# Dokument holen oder erzeugen
+# ------------------------------------------------------------
+
+doc = App.ActiveDocument
+
+if doc is None:
+    doc = App.newDocument("FreeCard-Kids")
+
+# ------------------------------------------------------------
+# Alte FreeCard löschen
+# ------------------------------------------------------------
+
+for obj in list(doc.Objects):
+    if obj.Name.startswith("FreeCard"):
+        doc.removeObject(obj.Name)
+
+doc.recompute()
+
+# ------------------------------------------------------------
+# Karte erzeugen
+# ------------------------------------------------------------
+
+shape = Part.makeBox(
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    BASE_THICKNESS
+)
+
+# Nur die vertikalen Kanten verrunden
+vertical_edges = []
+
+for edge in shape.Edges:
+
+    v1 = edge.Vertexes[0].Point
+    v2 = edge.Vertexes[1].Point
+
+    if abs(v1.x - v2.x) < 0.001 \
+       and abs(v1.y - v2.y) < 0.001:
+
+        vertical_edges.append(edge)
+
+shape = shape.makeFillet(
+    5.0,
+    vertical_edges
+)
+
+card = doc.addObject(
+    "Part::Feature",
+    "FreeCard"
+)
+
+card.Shape = shape
+
+doc.recompute()
+
+App.ActiveDocument.recompute()
+
+print("FreeCard Version 0.1 erstellt.")
