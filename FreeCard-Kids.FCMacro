@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 FreeCard Kids
-Version 0.1
+Version 0.6
 
 Erzeugt eine Visitenkarten-Basis.
 FreeCAD 1.1.1
@@ -9,15 +9,126 @@ FreeCAD 1.1.1
 
 import FreeCAD as App
 import Part
+import Draft
+import os
+import subprocess
+import sys
+
+PROJECT_PATH = os.path.dirname(__file__)
+
+if PROJECT_PATH not in sys.path:
+    sys.path.insert(0, PROJECT_PATH)
+
+
+# Konfiguration laden
+from config import (
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    FRAME_WIDTH,
+    FRAME_HEIGHT,
+    BASE_THICKNESS,
+    RELIEF_HEIGHT,
+    QR_SIZE,
+    QR_MARGIN,
+    QR_FILE,
+    CHILD_NAME,
+    MOM_PHONE,
+    DAD_PHONE,
+    FONT_NAME,
+    FONT_FILE,
+    FONT_SIZE_NAME,
+    FONT_SIZE_PHONE,
+    FONT_SIZE_INFO,
+    INFO_DE,
+    INFO_EN
+    
+)
+
+
+print("FreeCard Config geladen")
+print("-----------------------")
+print("Karte:", CARD_WIDTH, "x", CARD_HEIGHT)
+print("QR:", QR_SIZE)
+print("QR Rand:", QR_MARGIN)
+print("Child:", CHILD_NAME)
+print("Mama:", MOM_PHONE)
+print("Papa:", DAD_PHONE)
 
 # ------------------------------------------------------------
-# Konfiguration
+# Schrift konfigurieren
 # ------------------------------------------------------------
 
-CARD_WIDTH = 85.0
-CARD_HEIGHT = 55.0
+def get_font_file():
+    """Liefert den Pfad zur gewünschten Schriftdatei."""
 
-BASE_THICKNESS = 1.8
+    if FONT_FILE:
+        if os.path.exists(FONT_FILE):
+            return FONT_FILE
+        raise RuntimeError(f"Schriftdatei nicht gefunden: {FONT_FILE}")
+
+    try:
+        path = subprocess.check_output(
+            ["fc-match", "-f", "%{file}", FONT_NAME],
+            text=True
+        ).strip()
+
+        if os.path.exists(path):
+            return path
+
+    except Exception as err:
+        raise RuntimeError(
+            f"Schrift '{FONT_NAME}' konnte nicht gefunden werden."
+        ) from err
+
+    raise RuntimeError("Keine passende Schrift gefunden.")
+
+# ------------------------------------------------------------
+# Text erzeugen
+# ------------------------------------------------------------
+
+def create_text(doc, text, size, y):
+
+    font = get_font_file()
+
+    txt = Draft.makeShapeString(
+        String=text,
+        FontFile=font,
+        Size=size
+    )
+
+    doc.recompute()
+
+    # Breite des Textes bestimmen
+    bbox = txt.Shape.BoundBox
+
+    # Text horizontal zentrieren
+    x = (CARD_WIDTH - bbox.XLength) / 2
+
+    txt.Placement.Base = App.Vector(
+        x,
+        y,
+        BASE_THICKNESS + FRAME_HEIGHT
+    )
+
+    doc.recompute()
+
+    return txt
+        
+# ------------------------------------------------------------
+# Telefonnummer erzeugen
+# ------------------------------------------------------------
+
+def create_phone(doc, label, phone, y):
+
+    text = f"{label}: {phone}"
+
+    return create_text(
+        doc,
+        text,
+        FONT_SIZE_PHONE,
+        y
+    )
+
 
 # ------------------------------------------------------------
 # Dokument holen oder erzeugen
@@ -71,10 +182,112 @@ card = doc.addObject(
     "FreeCard"
 )
 
+# ------------------------------------------------------------
+# Rahmen erzeugen
+# ------------------------------------------------------------
+
+inner = Part.makeBox(
+    CARD_WIDTH - 2 * FRAME_WIDTH,
+    CARD_HEIGHT - 2 * FRAME_WIDTH,
+    FRAME_HEIGHT
+)
+
+inner.translate(
+    App.Vector(
+        FRAME_WIDTH,
+        FRAME_WIDTH,
+        BASE_THICKNESS
+    )
+)
+
+outer = Part.makeBox(
+    CARD_WIDTH,
+    CARD_HEIGHT,
+    FRAME_HEIGHT
+)
+
+outer.translate(
+    App.Vector(
+        0,
+        0,
+        BASE_THICKNESS
+    )
+)
+
+# Gleiche Rundungen wie die Grundplatte
+outer = outer.makeFillet(5.0, [
+    e for e in outer.Edges
+    if abs(e.Vertexes[0].Point.x - e.Vertexes[1].Point.x) < 0.001
+    and abs(e.Vertexes[0].Point.y - e.Vertexes[1].Point.y) < 0.001
+])
+
+inner = inner.makeFillet(
+    max(0.1, 5.0 - FRAME_WIDTH),
+    [
+        e for e in inner.Edges
+        if abs(e.Vertexes[0].Point.x - e.Vertexes[1].Point.x) < 0.001
+        and abs(e.Vertexes[0].Point.y - e.Vertexes[1].Point.y) < 0.001
+    ]
+)
+
+frame = outer.cut(inner)
+
+shape = shape.fuse(frame)
+
+card.Shape = shape
+
+# ------------------------------------------------------------
+# Name
+# ------------------------------------------------------------
+
+name = create_text(
+    doc,
+    CHILD_NAME,
+    FONT_SIZE_NAME,
+    CARD_HEIGHT - 12
+)
+
+# ------------------------------------------------------------
+# Telefonnummern
+# ------------------------------------------------------------
+
+mom = create_phone(
+    doc,
+    "Mama",
+    MOM_PHONE,
+    CARD_HEIGHT - 22
+)
+
+dad = create_phone(
+    doc,
+    "Papa",
+    DAD_PHONE,
+    CARD_HEIGHT - 29
+)
+
+# ------------------------------------------------------------
+# Hinweis
+# ------------------------------------------------------------
+
+info_de = create_text(
+    doc,
+    INFO_DE,
+    FONT_SIZE_INFO,
+    8
+)
+
+info_en = create_text(
+    doc,
+    INFO_EN,
+    FONT_SIZE_INFO,
+    4
+)
+
+
 card.Shape = shape
 
 doc.recompute()
 
 App.ActiveDocument.recompute()
 
-print("FreeCard Version 0.1 erstellt.")
+print("FreeCard Version 0.6 erstellt.")

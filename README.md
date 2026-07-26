@@ -2,7 +2,7 @@
 
 **Open Source 3D printable contact cards for children made with FreeCAD.**
 
-![FreeCard Kids](docs/images/banner.png)
+![FreeCard Kids](Projekt.png)
 
 FreeCard Kids generates customizable 3D-printable contact cards for children.
 
