@@ -1,0 +1,87 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+FreeCard Kids
+vCard QR SVG Generator
+
+Erzeugt einen QR-Code als SVG
+für direkten FreeCAD Import.
+"""
+
+import segno
+
+from config import (
+    CHILD_NAME,
+    MOM_PHONE,
+    DAD_PHONE,
+    QR_SIZE,
+    QR_MARGIN
+)
+
+
+OUTPUT_FILE = "vcard_qr.svg"
+
+
+# ==========================
+# Name zerlegen
+# ==========================
+
+NAME_PARTS = CHILD_NAME.split(" ")
+
+if len(NAME_PARTS) >= 2:
+    FIRST_NAME = NAME_PARTS[0]
+    LAST_NAME = " ".join(NAME_PARTS[1:])
+else:
+    FIRST_NAME = CHILD_NAME
+    LAST_NAME = ""
+
+
+# ==========================
+# vCard erstellen
+# ==========================
+
+VCARD = f"""BEGIN:VCARD
+VERSION:3.0
+N:{LAST_NAME};{FIRST_NAME}
+FN:{CHILD_NAME}
+TEL;TYPE=CELL:{MOM_PHONE}
+TEL;TYPE=CELL:{DAD_PHONE}
+END:VCARD
+"""
+
+
+# ==========================
+# QR-Code erzeugen
+# ==========================
+
+QR = segno.make(
+    VCARD,
+    error="q"
+)
+
+
+# ==========================
+# SVG speichern
+# ==========================
+
+QR.save(
+    OUTPUT_FILE,
+    scale=10,
+    border=QR_MARGIN
+)
+
+
+# ==========================
+# Ausgabe
+# ==========================
+
+print("--------------------------------")
+print("FreeCard Kids QR erzeugt")
+print("--------------------------------")
+print("Datei :", OUTPUT_FILE)
+print("Name  :", CHILD_NAME)
+print("QR    :", QR_SIZE, "mm")
+print("Mom   :", MOM_PHONE)
+print("Dad   :", DAD_PHONE)
+print("--------------------------------")
