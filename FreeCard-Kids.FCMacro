@@ -7,18 +7,24 @@ Erzeugt eine Visitenkarten-Basis.
 FreeCAD 1.1.1
 """
 
+# ------------------------------------------------------------
+# Projektverzeichnis
+# ------------------------------------------------------------
+
+try:
+    PROJECT_DIR = os.path.dirname(os.path.realpath(__file__))
+except NameError:
+    PROJECT_DIR = os.getcwd()
+
+if PROJECT_DIR not in sys.path:
+    sys.path.insert(0, PROJECT_DIR)
+
 import FreeCAD as App
 import Part
 import Draft
 import os
 import subprocess
 import sys
-
-PROJECT_PATH = os.path.dirname(__file__)
-
-if PROJECT_PATH not in sys.path:
-    sys.path.insert(0, PROJECT_PATH)
-
 
 # Konfiguration laden
 from config import (
@@ -31,6 +37,8 @@ from config import (
     QR_SIZE,
     QR_MARGIN,
     QR_FILE,
+    QR_OFFSET_X, 
+    QR_OFFSET_Y,
     CHILD_NAME,
     MOM_PHONE,
     DAD_PHONE,
@@ -41,10 +49,14 @@ from config import (
     FONT_SIZE_INFO,
     INFO_DE,
     INFO_EN
-    
 )
+#from create_vcard_qr_svg import create_qr
+from vcard_qr_matrix import QR_MATRIX, QR_MODULES
 
+def get_qr_module_size():
 
+    return QR_SIZE / QR_MODULES
+    
 print("FreeCard Config geladen")
 print("-----------------------")
 print("Karte:", CARD_WIDTH, "x", CARD_HEIGHT)
@@ -53,7 +65,10 @@ print("QR Rand:", QR_MARGIN)
 print("Child:", CHILD_NAME)
 print("Mama:", MOM_PHONE)
 print("Papa:", DAD_PHONE)
-
+print("QR-Module :", QR_MODULES)
+print("Modulgröße:", get_qr_module_size())
+print("Matrix Zeilen:", len(QR_MATRIX))
+print("Matrix Spalten:", len(QR_MATRIX[0]))
 # ------------------------------------------------------------
 # Schrift konfigurieren
 # ------------------------------------------------------------
@@ -258,6 +273,89 @@ mom = create_phone(
     CARD_HEIGHT - 22
 )
 
+# ------------------------------------------------------------
+# QR-Code erzeugen
+# ------------------------------------------------------------
+
+def create_qr():
+
+    module_size = QR_SIZE / QR_MODULES
+
+    qr_x = CARD_WIDTH - QR_SIZE - QR_OFFSET_X
+    qr_y = (CARD_HEIGHT - QR_SIZE) / 2 + QR_OFFSET_Y
+	
+    faces = []
+    
+    for row, line in enumerate(QR_MATRIX):
+
+        col = 0
+
+        while col < QR_MODULES:
+
+            if not line[col]:
+                col += 1
+                continue
+
+            start = col
+
+            while col < QR_MODULES and line[col]:
+                col += 1
+
+            length = col - start
+
+            x1 = qr_x + start * module_size
+            x2 = qr_x + (start + length) * module_size
+
+            y1 = qr_y + (QR_MODULES - row - 1) * module_size
+            y2 = y1 + module_size
+
+            wire = Part.makePolygon([
+                App.Vector(x1, y1, 0),
+                App.Vector(x2, y1, 0),
+                App.Vector(x2, y2, 0),
+                App.Vector(x1, y2, 0),
+                App.Vector(x1, y1, 0)
+            ])
+
+            faces.append(Part.Face(wire))
+
+    print("QR-Flächen:", len(faces))
+
+    if not faces:
+        raise RuntimeError("QR-Code leer.")
+
+    compound = Part.makeCompound(faces)
+
+    qr = compound.extrude(
+        App.Vector(
+            0,
+            0,
+            RELIEF_HEIGHT
+        )
+    )
+
+    qr.translate(
+        App.Vector(
+            0,
+            0,
+            BASE_THICKNESS
+        )
+    )
+
+    return qr
+
+# ------------------------------------------------------------
+# QR-Position berechnen
+# ------------------------------------------------------------
+
+def get_qr_position():
+
+    x = CARD_WIDTH - QR_SIZE - QR_MARGIN
+
+    y = (CARD_HEIGHT - QR_SIZE) / 2
+
+    return x, y
+
 dad = create_phone(
     doc,
     "Papa",
@@ -283,6 +381,9 @@ info_en = create_text(
     4
 )
 
+qr = create_qr()
+
+shape = shape.fuse(qr)
 
 card.Shape = shape
 
