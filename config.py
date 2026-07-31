@@ -3,6 +3,12 @@
 # FreeCard Kids
 # config.py
 
+import os
+
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+
+QR_FILE = os.path.join(PROJECT_DIR, "vcard_qr.svg")
+
 # ------------------------------------------------------------
 # Benutzereinstellungen
 # ------------------------------------------------------------
@@ -12,7 +18,7 @@ CHILD_NAME = "Max Mustermann"
 MOM_PHONE = "+49 151 12345678"
 DAD_PHONE = "+49 172 98765432"
 
-QR_FILE = "vcard_qr.svg"
+#QR_FILE = "vcard_qr.svg"
 
 # Schriftfamilie
 FONT_NAME = "Noto Sans"
@@ -42,3 +48,6 @@ FRAME_HEIGHT = 0.6
 
 QR_SIZE = 45.0
 QR_MARGIN = 2.0
+QR_SCALE = 10
+QR_OFFSET_X = 5.0
+QR_OFFSET_Y = 0.0
